@@ -1,29 +1,22 @@
-from imutils import paths
 import numpy as np
-import argparse
 import imutils
 import cv2
 import pytesseract as tess
 
-# get the image address
-# ap = argparse.ArgumentParser()
-# ap.add_argument("-i", "--images", required=True, help="path to images directory")
-# args = vars(ap.parse_args())
 
 # initializing a rectangular and square structuring kernel
 rectKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (13, 5))
 sqKernel = cv2.getStructuringElement(cv2.MORPH_RECT, (21, 21))
 
-# image = cv2.imread(args["images"])
 image = cv2.imread("chq_demo.jpg")
 image = imutils.resize(image, height=600)
 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
 # blurring for smoothing image
-gray = cv2.GaussianBlur(gray, (3, 3), 0)
+gray_b = cv2.GaussianBlur(gray, (3, 3), 0)
 
 # morphological operation for finding dark region in light background
-blackhat = cv2.morphologyEx(gray, cv2.MORPH_BLACKHAT, rectKernel)
+blackhat = cv2.morphologyEx(gray_b, cv2.MORPH_BLACKHAT, rectKernel)
 cv2.imshow('blackhat', blackhat)
 cv2.waitKey(0)
 
@@ -57,7 +50,8 @@ boundries = cv2.drawContours(image.copy(), cnts, -1, (0, 255, 0), 3)
 cv2.imshow("contours", boundries)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
-# cnts = imutils.grab_contours(cnts)
+
+
 cnts = sorted(cnts, key=cv2.contourArea, reverse=True)
 #
 for c in cnts:
@@ -65,21 +59,28 @@ for c in cnts:
     (x, y, w, h) = cv2.boundingRect(c)
     print("{}---{}".format(w, h))
     if w > 100 and h > 10:
-        # img = cv2.rectangle(image, (x - 0.3, y - 0.3), (x + w + 0.3, y + h + 0.3), (124, 201, 98), 2)
         x1 = int(x-padding)
         y1 = int(y-padding)
         x2 = int(x+w+padding)
         y2 = int(y+h+padding)
 
         roi = image[y1:y2,x1:x2]
+        roi_tess = gray[y1:y2,x1:x2]
+
+        if h > 40:
+            text = tess.image_to_string(roi_tess, config='--oem 1')
+            print(text)
+        else:
+            text = tess.image_to_string(roi_tess, config='--oem 1 --psm 7')
+            print(text)
+
         cv2.imshow('selected area',roi)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
         img = cv2.rectangle(image, (x1 , y1), (x2 , y2), (124, 201, 98), 2)
 
-        text = tess.image_to_string(roi)
-        print(text)
+
 
 
 cv2.imshow("final",image)
