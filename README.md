@@ -8,3 +8,5 @@ The project tries to extract text from a given cheque image
   
 # Todo
       . Implement method to combine sentences split in multiple line into one as is case with the amount in words.
+
+# Check current results in medium folder
